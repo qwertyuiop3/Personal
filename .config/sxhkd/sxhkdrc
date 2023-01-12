@@ -1,0 +1,47 @@
+Print
+	bspc query -N -d && (maim -u | feh -F - & maim -g $(slop -t 0 -c 0.769,0.769,0.753) -u | xclip -t image/png -selection c; kill $!) || maim -u | xclip -t image/png -selection c
+
+super + f
+	bspc node -t floating
+
+super + l
+	maim -u | convert - -spread 0 /tmp/maim.png; i3lock -u -i /tmp/maim.png
+
+super + m
+	bspc node -g marked; bspc node newest.marked.local -n newest.!automatic.local
+
+super + r
+	bspc node @/ -R 90
+
+super + t
+	urxvt -cd ~
+
+super + shift + f
+	bspc node -t \~fullscreen
+
+super + shift + t
+	bspc node -t tiled
+
+super + alt + c
+	bspc node -p cancel
+
+super + {_,shift +} {Up,Left,Down,Right}
+	bspc node -{f,s} {north,west,south,east}
+
+super + {_,shift +} {1-9,0}
+	bspc {desktop -f,node -d} {1-9,10}
+
+super + {_,shift +} c
+	bspc node -{c,k}
+
+super + alt + {Up,Left,Down,Right}
+	bspc node -z {top 0 -32,left -32 0,bottom 0 32,right 32 0}
+
+super + alt + {1-9}
+	bspc node -o 0.{1-9}
+
+super + ctrl + {Up,Left,Down,Right}
+	bspc node -p {north,west,south,east}
+
+super + shift + alt + {Up,Left,Down,Right}
+	bspc node -z {top 0 32,left 32 0,bottom 0 -32,right -32 0}
