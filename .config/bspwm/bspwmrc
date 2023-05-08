@@ -20,6 +20,10 @@ bspc rule -a firefox-nightly state=tiled
 
 bspc rule -a firefox-nightly:Alert state=floating
 
+bspc rule -a firefox-nightly:Browser state=floating
+
+bspc rule -a firefox-nightly:Firefox state=floating border=off
+
 . "${HOME}/.cache/wal/colors.sh"
 
 bspc config normal_border_color "$color1"
