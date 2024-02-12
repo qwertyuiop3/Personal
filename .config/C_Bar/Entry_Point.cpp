@@ -236,6 +236,8 @@ int32_t main()
 
   cairo_font_options_set_hint_style(Cairo_Font_Options, CAIRO_HINT_STYLE_FULL);
 
+  cairo_font_options_set_antialias(Cairo_Font_Options, CAIRO_ANTIALIAS_GRAY);
+
   cairo_set_font_options(Cairo, Cairo_Font_Options);
 
   cairo_select_font_face(Cairo, "notosansmono", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
