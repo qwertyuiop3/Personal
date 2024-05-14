@@ -20,7 +20,7 @@ if [ $UID -ne 0 ]; then
 
 		mpv()
 		{
-			command mpv $@ --audio-file-auto=all --sub-auto=all
+			command mpv $@ --audio-file-auto=all --sub-auto=all --profile=low-latency --untimed
 		}
 	fi
 fi

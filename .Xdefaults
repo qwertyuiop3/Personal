@@ -6,7 +6,7 @@ URxvt.iso14755: 0
 
 URxvt.iso14755_52: 0
 
-URxvt*scrollBar: 0
+URxvt.scrollBar: 0
 
 URxvt.perl-ext-common: default,vtwheel,tabbed
 
@@ -28,10 +28,12 @@ URxvt.keysym.S-C-V: eval:paste_clipboard
 
 Xft.hinting: 0
 
-URxvt*font:xft:Noto Sans Mono:regular:size=10
+URxvt.font:xft:Noto Sans Mono:regular:size=10
 
-URxvt*boldFont:xft:Noto Sans Mono:bold:size=10
+URxvt.boldFont:xft:Noto Sans Mono:bold:size=10
 
-URxvt*italicFont:xft:Noto Sans Mono:regular:size=10
+URxvt.italicFont:xft:Noto Sans Mono:regular:size=10
 
-URxvt*boldItalicFont:xft:Noto Sans Mono:bold:size=10
+URxvt.boldItalicFont:xft:Noto Sans Mono:bold:size=10
+
+URxvt.letterSpace: 1

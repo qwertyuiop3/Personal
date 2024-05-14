@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 
 if ! pgrep picom > /dev/null; then
 	feh --bg-fill ~/.config/bspwm/bg.jpg
@@ -24,7 +24,7 @@ bspc rule -a firefox-nightly:Browser state=floating
 
 bspc rule -a firefox-nightly:Firefox state=floating border=off
 
-. "${HOME}/.cache/wal/colors.sh"
+. "~/.cache/wal/colors.sh"
 
 bspc config normal_border_color "$color1"
 
