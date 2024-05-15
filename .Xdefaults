@@ -2,13 +2,15 @@
 
 URxvt.geometry: 400x400
 
+URxvt.depth: 24
+
 URxvt.iso14755: 0
 
 URxvt.iso14755_52: 0
 
 URxvt.scrollBar: 0
 
-URxvt.perl-ext-common: default,vtwheel,tabbed
+URxvt.perl-ext-common: default,vtwheel
 
 URxvt.tabbed.tabbar-bg: 0
 

@@ -2,9 +2,9 @@
 
 HISTFILE=~/.histfile
 
-HISTSIZE=1000
+HISTSIZE=1024
 
-SAVEHIST=1000
+SAVEHIST=1024
 
 unsetopt autocd beep extendedglob nomatch notify
 
@@ -21,6 +21,13 @@ if [ $UID -ne 0 ]; then
 		mpv()
 		{
 			command mpv $@ --audio-file-auto=all --sub-auto=all --profile=low-latency --untimed
+		}
+
+		ncmpcpp()
+		{
+			command ncmpcpp
+
+			printf "\e]20;;0x0+1920+1080\a"
 		}
 	fi
 fi

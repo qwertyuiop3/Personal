@@ -24,7 +24,7 @@ bspc rule -a firefox-nightly:Browser state=floating
 
 bspc rule -a firefox-nightly:Firefox state=floating border=off
 
-. "~/.cache/wal/colors.sh"
+. "${HOME}/.cache/wal/colors.sh"
 
 bspc config normal_border_color "$color1"
 
