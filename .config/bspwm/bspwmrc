@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 
-if ! pgrep picom > /dev/null; then
+if ! pgrep xcompmgr > /dev/null; then
 	feh --bg-fill ~/.config/bspwm/bg.jpg
 
-	picom &
+	xcompmgr &
 
 	pkill -x C_Bar
 
