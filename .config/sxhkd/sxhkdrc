@@ -1,11 +1,11 @@
 Print
-	bspc query -N -d && (maim -u | feh -F - & maim -g $(slop -t 0 -c 0.769,0.769,0.753) -u | xclip -t image/png -selection c; kill $!) || maim -u | xclip -t image/png -selection c
+	scrot -s -f -l mode=edge,color=#c4c4c0 - | xclip -t image/png -selection c; kill $!
 
 super + f
 	bspc node -t floating
 
 super + l
-	maim -u | convert - -spread 0 /tmp/maim.png; i3lock -u -i /tmp/maim.png
+	scrot - | convert - -spread 0 /tmp/scrot.png; i3lock -u -i /tmp/scrot.png
 
 super + m
 	bspc node -g marked; bspc node newest.marked.local -n newest.!automatic.local
