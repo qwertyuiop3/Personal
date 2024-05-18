@@ -1,5 +1,5 @@
 Print
-	scrot -s -f -l mode=edge,color=#c4c4c0 - | xclip -t image/png -selection c; kill $!
+	scrot -s -f -l mode=edge,color=#c4c4c0 - | xclip -t image/png -selection c
 
 super + f
 	bspc node -t floating
