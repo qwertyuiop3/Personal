@@ -1,5 +1,5 @@
 Print
-	scrot - | feh -F - & scrot -s -l mode=edge,color=#c4c4c0 - | xclip -t image/png -selection c; kill $!
+	scrot -s -f -l mode=edge,style=dash,color=#c4c4c0 - | xclip -t image/png -selection c
 
 super + f
 	bspc node -t floating
