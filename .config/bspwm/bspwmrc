@@ -3,7 +3,7 @@
 if ! pgrep xcompmgr > /dev/null; then
 	feh --bg-fill ~/.config/bspwm/bg.jpg
 
-	xcompmgr &
+	picom &
 
 	pkill -x C_Bar
 
