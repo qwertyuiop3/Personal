@@ -34,5 +34,12 @@ if [ $UID -ne 0 ]; then
 
 			printf "\e]20;;0x0+1920+1080\a"
 		}
+
+		run()
+		{
+			screen -dm -s $@
+
+			exit
+		}
 	fi
 fi
