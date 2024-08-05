@@ -9,6 +9,10 @@ if ! pgrep picom > /dev/null; then
 
 	qbittorrent &
 
+	ciadpi -d 2 &
+
+	ciadpi -p 1081 -o 1 &
+
 	sxhkd &
 fi
 
