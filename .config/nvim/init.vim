@@ -4,7 +4,7 @@ set nofixendofline
 
 set mouse=
 
-set fileencodings=cp1251
+set fileencodings=utf-8,cp1251
 
 colorscheme wal
 
