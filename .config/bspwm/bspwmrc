@@ -13,7 +13,7 @@ if ! pgrep picom > /dev/null; then
 
 	ciadpi -p 1081 -o 1 &
 
-	nekobox --tray &
+	nekobox -tray &
 
 	sxhkd &
 fi
