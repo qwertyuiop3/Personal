@@ -330,7 +330,7 @@ int32_t main()
 							cairo_set_source_rgb(Cairo, Color_3);
 						}
 
-						cairo_move_to(Cairo, 7 + Desktop_Number * 46, X_Screen_Height / 2 + 3);
+						cairo_move_to(Cairo, 7 + Desktop_Number * 44, X_Screen_Height / 2 + 3);
 
 						char* Formatted_To_Draw_Desktop_Number = (char*)malloc(strlen(To_Draw_Desktop_Number) + 5);
 
@@ -346,9 +346,9 @@ int32_t main()
 
 						free(Formatted_To_Draw_Desktop_Number);
 
-						cairo_move_to(Cairo, 10 + Desktop_Number * 46, X_Screen_Height);
+						cairo_move_to(Cairo, 10 + Desktop_Number * 44, X_Screen_Height);
 
-						cairo_line_to(Cairo, 10 + Desktop_Number * 46 + Cairo_Text_Extents.width, X_Screen_Height);
+						cairo_line_to(Cairo, 10 + Desktop_Number * 44 + Cairo_Text_Extents.width, X_Screen_Height);
 
 						cairo_stroke(Cairo);
 
