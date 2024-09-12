@@ -14,26 +14,17 @@ if [ $UID -ne 0 ]; then
 
 		rm -rf ~/.local/share/ranger
 
+		rm -rf ~/.cache/ueberzugpp
+
 		cat ~/.cache/wal/sequences
 
 		neofetch
 
-		mpv()
-		{
-			command mpv $@ --audio-file-auto=all --sub-auto=all
-		}
+		alias mpv="mpv --audio-file-auto=all --sub-auto=all $@"
 
-		mpvu()
-		{
-			command mpv $@ --profile=low-latency --untimed
-		}
+		alias mpvu="command mpv --profile=low-latency --untimed $@"
 
-		ncmpcpp()
-		{
-			command ncmpcpp
-
-			printf "\e]20;;0x0+1920+1080\a"
-		}
+		alias ncmpcpp="ncmpcpp;printf \"\e]20;;0x0+1920+1080\a\""
 
 		run()
 		{
@@ -41,5 +32,9 @@ if [ $UID -ne 0 ]; then
 
 			exit
 		}
+
+		alias firejail="firejail --allusers --private=/Storage/Software/firejail $@"
+
+		alias wine=""
 	fi
 fi
