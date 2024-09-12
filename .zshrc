@@ -33,7 +33,10 @@ if [ $UID -ne 0 ]; then
 			exit
 		}
 
-		alias firejail="firejail --allusers --private=/Storage/Software/firejail $@"
+		firejail()
+		{
+			command firejail --private=/Storage/Software/firejail $@
+		}
 
 		alias wine=""
 	fi
