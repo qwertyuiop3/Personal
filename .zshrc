@@ -33,6 +33,8 @@ if [ $UID -ne 0 ]; then
 			exit
 		}
 
+		alias discord="run https_proxy=socks5://127.0.0.1:2080 discord"
+
 		firejail()
 		{
 			command firejail --private=/Storage/Software/firejail $@
