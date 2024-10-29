@@ -28,12 +28,12 @@ if [ $UID -ne 0 ]; then
 
 		run()
 		{
-			screen -dm -s $@
+			screen -dms -X $@
 
 			exit
 		}
 
-		alias discord="run https_proxy=socks5://127.0.0.1:2080 discord"
+		alias discord="run discord --proxy-server=socks5://127.0.0.1:1081"
 
 		firejail()
 		{
