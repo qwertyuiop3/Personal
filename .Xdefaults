@@ -1,41 +1,21 @@
 #include ".cache/wal/colors.Xresources"
-
-URxvt.geometry: 400x400
-
-URxvt.depth: 24
-
-URxvt.iso14755: 0
-
-URxvt.iso14755_52: 0
-
-URxvt.scrollBar: 0
-
-URxvt.perl-ext-common: default,vtwheel
-
-URxvt.tabbed.tabbar-bg: 0
-
-URxvt.tabbed.tabbar-fg: 1
-
-URxvt.tabbed.tab-bg: 0
-
-URxvt.tabbed.tab-fg: 7
-
-URxvt.keysym.C-M-c: builtin-string:
-
-URxvt.keysym.C-M-v: builtin-string:
-
-URxvt.keysym.S-C-C: eval:selection_to_clipboard
-
-URxvt.keysym.S-C-V: eval:paste_clipboard
-
 Xft.hinting: 0
-
+URxvt.geometry: 400x400
+URxvt.depth: 24
+URxvt.iso14755: 0
+URxvt.iso14755_52: 0
+URxvt.scrollBar: 0
+URxvt.perl-ext-common: default,vtwheel
+URxvt.tabbed.tabbar-bg: 0
+URxvt.tabbed.tabbar-fg: 1
+URxvt.tabbed.tab-bg: 0
+URxvt.tabbed.tab-fg: 7
+URxvt.keysym.C-M-c: builtin-string:
+URxvt.keysym.C-M-v: builtin-string:
+URxvt.keysym.S-C-C: eval:selection_to_clipboard
+URxvt.keysym.S-C-V: eval:paste_clipboard
 URxvt.font:xft:Noto Sans Mono:regular:size=10
-
 URxvt.boldFont:xft:Noto Sans Mono:bold:size=10
-
 URxvt.italicFont:xft:Noto Sans Mono:regular:size=10
-
 URxvt.boldItalicFont:xft:Noto Sans Mono:bold:size=10
-
 URxvt.letterSpace: 1

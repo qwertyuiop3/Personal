@@ -1,9 +1,5 @@
 song_columns_list_format = (6)[]{NE} (6)[white]{t|f:Title} (5f)[]{l}
-
 header_visibility = no
-
 execute_on_song_change = "~/.config/ncmpcpp/cover.sh"
-
 progressbar_look = "▃▃▃"
-
 statusbar_visibility = no

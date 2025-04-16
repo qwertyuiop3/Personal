@@ -1,11 +1,6 @@
 noblacklist /Storage/Software
-
 noblacklist /Storage/Software/firejail
-
 blacklist /Storage/*
-
 blacklist /Storage/Software/*
-
 blacklist /Portable_Storage
-
 blacklist /Windows

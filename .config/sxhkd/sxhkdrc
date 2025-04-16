@@ -5,7 +5,7 @@ super + f
 	bspc node -t floating
 
 super + l
-	scrot - | convert - -spread 0 /tmp/scrot.png; i3lock -u -i /tmp/scrot.png
+	scrot - | magick - -spread 0 /tmp/lock.png; i3lock -ui /tmp/lock.png
 
 super + m
 	bspc node -g marked; bspc node newest.marked.local -n newest.!automatic.local
