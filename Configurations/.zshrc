@@ -17,7 +17,7 @@ if [ $UID -ne 0 ]; then
 			screen -dms -X $@
 			exit
 		}
-		alias discord="run nsproxy -p 1081 discord"
+		alias discord="run nsproxy discord"
 		firejail()
 		{
 			command firejail --private=/Storage/Software/firejail $@
