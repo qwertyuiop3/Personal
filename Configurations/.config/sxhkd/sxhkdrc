@@ -22,9 +22,6 @@ super + shift + f
 super + shift + t
 	bspc node -t tiled
 
-super + alt + c
-	bspc node -p cancel
-
 super + {_,shift +} {Up,Left,Down,Right}
 	bspc node -{f,s} {north,west,south,east}
 
@@ -37,8 +34,8 @@ super + {_,shift +} c
 super + alt + {Up,Left,Down,Right}
 	bspc node -z {top 0 -32,left -32 0,bottom 0 32,right 32 0}
 
-super + alt + {1-9}
-	bspc node -o 0.{1-9}
+super + ctrl + c
+	bspc node -p cancel
 
 super + ctrl + {Up,Left,Down,Right}
 	bspc node -p {north,west,south,east}
