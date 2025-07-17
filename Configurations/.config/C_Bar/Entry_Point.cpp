@@ -14,7 +14,7 @@
 
 #include <X11/XKBlib.h>
 
-#define Color_1 11 / 255.f, 16 / 255.f, 17 / 255.f
+#define Color_1 11 / 255., 16 / 255., 17 / 255.
 
 void Shell_Output_Multiple(char* Command, std::vector<char*>& Output_List)
 {
@@ -76,9 +76,9 @@ int8_t Compare(char* A, char* B)
 	return 1;
 }
 
-#define Color_2 196 / 255.f, 196 / 255.f, 196 / 255.f
+#define Color_2 196 / 255., 196 / 255., 192 / 255.
 
-#define Color_3 75 / 255.f, 82 / 255.f, 81 / 255.f
+#define Color_3 75 / 255., 82 / 255., 81 / 255.
 
 ssize_t Shell_Output_Multiple_Count(char* Command, char* Ignored_Line)
 {
