@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 #include <wayland-client-protocol.h>
+#include <sdbus-c++/sdbus-c++.h>
 #include "nkk.hpp"
 double mouse_x;
 constexpr double cwbar_width = 1920;
@@ -99,8 +100,26 @@ void* routine(void* window)
 	}
 	return nullptr;
 }
+sdbus::IObject* g_concatenator{};
+void concatenate(sdbus::MethodCall call)
+{
+	printf("RegisterStatusNotifierItem\n");
+	fflush(stdout);
+}
 int32_t main()
 {
+	//td: systray
+	if (1) //note: dbus-monitor to debug
+	{
+		sdbus::ServiceName serviceName{"org.kde.StatusNotifierWatcher"};
+		auto connection = sdbus::createBusConnection(serviceName);
+		sdbus::ObjectPath objectPath{"/StatusNotifierWatcher"};
+		auto concatenator = sdbus::createObject(*connection, std::move(objectPath));
+		g_concatenator = concatenator.get();
+		sdbus::InterfaceName interfaceName{"org.kde.StatusNotifierWatcher"};
+		concatenator->addVTable(sdbus::MethodVTableItem{sdbus::MethodName{"RegisterStatusNotifierItem"}, sdbus::Signature{"s"}, {}, sdbus::Signature{"s"}, {}, &concatenate, {}}).forInterface(interfaceName);
+		connection->enterEventLoop();
+	}
 	nkk_layer_config layer = { NkkLayerBelow, (uint32_t)cwbar_width, (uint32_t)cwbar_height, NkkLayerAnchorTop | NkkLayerAnchorLeft | NkkLayerAnchorRight, (int32_t)cwbar_height };
 	nkk_display* display = nkk_display_open(nullptr, nullptr);
 	nkk_win* window = nkk_layer_window_create(display, &layer);
