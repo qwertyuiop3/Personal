@@ -1,6 +1,8 @@
 #include <bits/stdc++.h>
 #include <wayland-client-protocol.h>
 #include <sdbus-c++/sdbus-c++.h>
+#include "StatusNotifierWatcher_adaptor.hpp"
+#include "StatusNotifierWatcher_proxy.hpp"
 #include "nkk.hpp"
 double mouse_x;
 constexpr double cwbar_width = 1920;
@@ -100,25 +102,112 @@ void* routine(void* window)
 	}
 	return nullptr;
 }
-sdbus::IObject* g_concatenator{};
-void concatenate(sdbus::MethodCall call)
+std::vector<std::string> status_notifier_items;
+class StatusNotifierWatcher_server : public sdbus::AdaptorInterfaces<org::kde::StatusNotifierWatcher_adaptor>
 {
-	printf("RegisterStatusNotifierItem\n");
-	fflush(stdout);
+public:
+	StatusNotifierWatcher_server(sdbus::IConnection& connection, sdbus::ObjectPath objectPath) : AdaptorInterfaces(connection, std::move(objectPath))
+	{
+		registerAdaptor();
+	}
+	~StatusNotifierWatcher_server()
+	{
+		unregisterAdaptor();
+	}
+private:
+	void RegisterStatusNotifierItem(const std::string& service) override
+	{
+		printf("register item\n");
+		status_notifier_items.emplace_back(service);
+		emitStatusNotifierItemRegistered(service);
+		if (0)
+		{
+			std::erase_if(status_notifier_items, [&](std::string& item){return item == service;});
+			emitStatusNotifierItemUnregistered(service);
+		}
+
+	}
+	void RegisterStatusNotifierHost(const std::string& service) override
+	{
+		printf("register host\n");
+		emitStatusNotifierHostRegistered();
+	}
+private:
+	std::vector<std::string> RegisteredStatusNotifierItems() override
+	{
+		return status_notifier_items;
+	}
+	//...
+	bool IsStatusNotifierHostRegistered() override
+	{
+		return 1;
+	}
+	int32_t ProtocolVersion() override
+	{
+		return 1;
+	}
+};
+class StatusNotifierWatcher_client : public sdbus::ProxyInterfaces<org::kde::StatusNotifierWatcher_proxy>
+{
+public:
+	StatusNotifierWatcher_client(sdbus::IConnection& connection, sdbus::ServiceName destination, sdbus::ObjectPath path) : ProxyInterfaces(connection, std::move(destination), std::move(path))
+	{
+		registerProxy();
+	}
+	~StatusNotifierWatcher_client()
+	{
+		unregisterProxy();
+	}
+protected:
+	void onStatusNotifierItemRegistered(const std::string& service) override
+	{
+		printf("client:item_registered\n");
+	}
+	void onStatusNotifierItemUnregistered(const std::string& service) override
+	{
+		printf("client:item_unregistered\n");
+	}
+	void onStatusNotifierHostRegistered() override
+	{
+		printf("client:host_registered\n");
+	}
+};
+void* server_routine(void* parameter)
+{
+	sdbus::ServiceName serviceName{"org.kde.StatusNotifierWatcher"};
+	auto connection = sdbus::createBusConnection(serviceName);
+	sdbus::ObjectPath objectPath{"/StatusNotifierWatcher"};
+	StatusNotifierWatcher_server server(*connection, std::move(objectPath));
+	printf("+ server\n");
+	connection->enterEventLoop();
+	return nullptr;
+}
+void* client_routine(void* parameter)
+{
+	auto connection = sdbus::createSessionBusConnection();
+	sdbus::ServiceName destination{"org.kde.StatusNotifierWatcher"};
+	sdbus::ObjectPath objectPath{"/StatusNotifierWatcher"};
+	StatusNotifierWatcher_client client(*connection, std::move(destination), std::move(objectPath));
+	client.RegisterStatusNotifierHost("cwbar");
+	printf("+ client\n");
+	connection->enterEventLoop();
+	return nullptr;
 }
 int32_t main()
 {
 	//td: systray
-	if (1) //note: dbus-monitor to debug
+	if (1) //note: dbus-monitor, qdbusviewer to debug
 	{
-		sdbus::ServiceName serviceName{"org.kde.StatusNotifierWatcher"};
-		auto connection = sdbus::createBusConnection(serviceName);
-		sdbus::ObjectPath objectPath{"/StatusNotifierWatcher"};
-		auto concatenator = sdbus::createObject(*connection, std::move(objectPath));
-		g_concatenator = concatenator.get();
-		sdbus::InterfaceName interfaceName{"org.kde.StatusNotifierWatcher"};
-		concatenator->addVTable(sdbus::MethodVTableItem{sdbus::MethodName{"RegisterStatusNotifierItem"}, sdbus::Signature{"s"}, {}, sdbus::Signature{"s"}, {}, &concatenate, {}}).forInterface(interfaceName);
-		connection->enterEventLoop();
+		pthread_t thread;
+		pthread_create(&thread, nullptr, server_routine, nullptr);
+		pthread_detach(thread);
+		sleep(1);
+		//...
+		pthread_create(&thread, nullptr, client_routine, nullptr);
+		pthread_detach(thread);
+		sleep(1);
+		//td: org.kde.StatusNotifierItem
+		sleep(1e9);
 	}
 	nkk_layer_config layer = { NkkLayerBelow, (uint32_t)cwbar_width, (uint32_t)cwbar_height, NkkLayerAnchorTop | NkkLayerAnchorLeft | NkkLayerAnchorRight, (int32_t)cwbar_height };
 	nkk_display* display = nkk_display_open(nullptr, nullptr);
