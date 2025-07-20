@@ -36,11 +36,13 @@ protected:
         m_proxy.uponSignal("StatusNotifierItemRegistered").onInterface(INTERFACE_NAME).call([this](const std::string& service){ this->onStatusNotifierItemRegistered(service); });
         m_proxy.uponSignal("StatusNotifierItemUnregistered").onInterface(INTERFACE_NAME).call([this](const std::string& service){ this->onStatusNotifierItemUnregistered(service); });
         m_proxy.uponSignal("StatusNotifierHostRegistered").onInterface(INTERFACE_NAME).call([this](){ this->onStatusNotifierHostRegistered(); });
+        m_proxy.uponSignal("StatusNotifierHostUnregistered").onInterface(INTERFACE_NAME).call([this](){ this->onStatusNotifierHostUnregistered(); });
     }
 
     virtual void onStatusNotifierItemRegistered(const std::string& service) = 0;
     virtual void onStatusNotifierItemUnregistered(const std::string& service) = 0;
     virtual void onStatusNotifierHostRegistered() = 0;
+    virtual void onStatusNotifierHostUnregistered() = 0;
 
 public:
     void RegisterStatusNotifierItem(const std::string& service)
@@ -54,6 +56,11 @@ public:
     }
 
 public:
+    int32_t ProtocolVersion()
+    {
+        return m_proxy.getProperty("ProtocolVersion").onInterface(INTERFACE_NAME).get<int32_t>();
+    }
+
     std::vector<std::string> RegisteredStatusNotifierItems()
     {
         return m_proxy.getProperty("RegisteredStatusNotifierItems").onInterface(INTERFACE_NAME).get<std::vector<std::string>>();
@@ -62,11 +69,6 @@ public:
     bool IsStatusNotifierHostRegistered()
     {
         return m_proxy.getProperty("IsStatusNotifierHostRegistered").onInterface(INTERFACE_NAME).get<bool>();
-    }
-
-    int32_t ProtocolVersion()
-    {
-        return m_proxy.getProperty("ProtocolVersion").onInterface(INTERFACE_NAME).get<int32_t>();
     }
 
 private:

@@ -1,6 +1,6 @@
 #include ".cache/wal/colors.Xresources"
 Xft.hinting: 0
-URxvt.geometry: 400x400
+URxvt.geometry: 205x51
 URxvt.depth: 24
 URxvt.iso14755: 0
 URxvt.iso14755_52: 0

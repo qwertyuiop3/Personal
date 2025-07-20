@@ -38,9 +38,10 @@ protected:
                           , sdbus::registerSignal("StatusNotifierItemRegistered").withParameters<std::string>("service")
                           , sdbus::registerSignal("StatusNotifierItemUnregistered").withParameters<std::string>("service")
                           , sdbus::registerSignal("StatusNotifierHostRegistered")
+                          , sdbus::registerSignal("StatusNotifierHostUnregistered")
+                          , sdbus::registerProperty("ProtocolVersion").withGetter([this](){ return this->ProtocolVersion(); })
                           , sdbus::registerProperty("RegisteredStatusNotifierItems").withGetter([this](){ return this->RegisteredStatusNotifierItems(); })
                           , sdbus::registerProperty("IsStatusNotifierHostRegistered").withGetter([this](){ return this->IsStatusNotifierHostRegistered(); })
-                          , sdbus::registerProperty("ProtocolVersion").withGetter([this](){ return this->ProtocolVersion(); })
                           ).forInterface(INTERFACE_NAME);
     }
 
@@ -60,14 +61,19 @@ public:
         m_object.emitSignal("StatusNotifierHostRegistered").onInterface(INTERFACE_NAME);
     }
 
+    void emitStatusNotifierHostUnregistered()
+    {
+        m_object.emitSignal("StatusNotifierHostUnregistered").onInterface(INTERFACE_NAME);
+    }
+
 private:
     virtual void RegisterStatusNotifierItem(const std::string& service) = 0;
     virtual void RegisterStatusNotifierHost(const std::string& service) = 0;
 
 private:
+    virtual int32_t ProtocolVersion() = 0;
     virtual std::vector<std::string> RegisteredStatusNotifierItems() = 0;
     virtual bool IsStatusNotifierHostRegistered() = 0;
-    virtual int32_t ProtocolVersion() = 0;
 
 private:
     sdbus::IObject& m_object;
