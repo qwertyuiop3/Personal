@@ -3,6 +3,7 @@
 #include <sdbus-c++/sdbus-c++.h>
 double mouse_x;
 constexpr double cwbar_width = 1920;
+constexpr double cwbar_center = cwbar_width / 2.;
 constexpr double cwbar_height = 33;
 int8_t show_date;
 int8_t should_redraw;
@@ -21,6 +22,61 @@ char* shell_output(char* command)
 	pclose(file);
 	return line;
 }
+struct status_notifier_bus
+{
+	std::unique_ptr<sdbus::IConnection> connection;
+	struct StatusNotifierItem_client* client;
+	std::vector<uint8_t> icon;
+};
+std::vector<status_notifier_bus*> status_notifier_buses;
+//td: implement `resize_icon`
+struct StatusNotifierItem_client : sdbus::ProxyInterfaces<org::kde::StatusNotifierItem_proxy>
+{
+	StatusNotifierItem_client(sdbus::IConnection& connection, sdbus::ServiceName service, sdbus::ObjectPath path) : ProxyInterfaces(connection, service, path)
+	{
+		registerProxy();
+	}
+	void onNewTitle(){}
+	void onNewIcon()
+	{
+		status_notifier_bus* bus = *std::find_if(status_notifier_buses.begin(), status_notifier_buses.end(), [&](status_notifier_bus* entry){return entry->client == this;});
+		bus->icon.resize(std::get<2>(IconPixmap().at(0)).size());
+		memcpy(bus->icon.data(), std::get<2>(IconPixmap().at(0)).data(), bus->icon.size());
+	}
+	void onNewAttentionIcon(){}
+	void onNewOverlayIcon(){}
+	void onNewToolTip(){}
+	void onNewStatus(const std::string& status){}
+};
+struct StatusNotifierWatcher_server : sdbus::AdaptorInterfaces<org::kde::StatusNotifierWatcher_adaptor>
+{
+	StatusNotifierWatcher_server(sdbus::IConnection& connection, sdbus::ObjectPath path) : AdaptorInterfaces(connection, path)
+	{
+		registerAdaptor();
+	}
+	void RegisterStatusNotifierItem(const std::string& service)
+	{
+		status_notifier_bus* bus = new status_notifier_bus;
+		bus->connection = sdbus::createSessionBusConnection();
+		bus->client = new StatusNotifierItem_client(*bus->connection, sdbus::ServiceName(service.c_str()), sdbus::ObjectPath("/StatusNotifierItem"));
+		bus->icon.resize(std::get<2>(bus->client->IconPixmap().at(0)).size());
+		memcpy(bus->icon.data(), std::get<2>(bus->client->IconPixmap().at(0)).data(), bus->icon.size());
+		status_notifier_buses.push_back(bus);
+	}
+	void RegisterStatusNotifierHost(const std::string& service){}
+	int32_t ProtocolVersion()
+	{
+		return 0;
+	}
+	std::vector<std::string> RegisteredStatusNotifierItems()
+	{
+		return {};
+	}
+	bool IsStatusNotifierHostRegistered()
+	{
+		return 1;
+	}
+};
 void draw(nkk_win* window, cairo_t* context)
 {
 	cairo_set_source_rgb(context, cwbar_red(cwbar_background) / 255., cwbar_green(cwbar_background) / 255., cwbar_blue(cwbar_background) / 255.);
@@ -54,7 +110,64 @@ void draw(nkk_win* window, cairo_t* context)
 	}
 	//center
 	{
-		//td: render bitmap
+		static std::unique_ptr<sdbus::IConnection> connection = sdbus::createBusConnection(sdbus::ServiceName("org.kde.StatusNotifierWatcher"));
+		static StatusNotifierWatcher_server server(*connection, sdbus::ObjectPath("/StatusNotifierWatcher"));
+		auto process_events = [](sdbus::IConnection* connection) -> void
+		{
+			process_event_label:
+			{
+				if (connection->processPendingEvent() == 1) goto process_event_label;
+			}
+		};
+		process_events(connection.get());
+		if (status_notifier_buses.size() == 0)
+		{
+			draw_underline(context, cwbar_center - 8, cwbar_center + 8, cwbar_inactive);
+		}
+		else
+		{
+			decltype(status_notifier_buses)::size_type bus_number = 0;
+			traverse_buses_label:
+			{
+				status_notifier_bus* bus = status_notifier_buses.at(bus_number);
+				process_events(bus->connection.get());
+				//td: draw bitmap
+				double icon_x_left = cwbar_center - 8;
+				if (status_notifier_buses.size() != 1)
+				{
+					if (bus_number % 2 == 0) icon_x_left -= 13 * (status_notifier_buses.size() - bus_number - 1);
+					else icon_x_left += 13 * (status_notifier_buses.size() - bus_number);
+				}
+				double icon_x_right = icon_x_left + 16;
+				draw_underline(context, icon_x_left, icon_x_right, cwbar_active);
+				if (mouse_x != 0)
+				{
+					try
+					{	
+						if (within_box(icon_x_left, icon_x_right) == 1) bus->client->Activate(0, 0);
+					}
+					catch(...){}
+				}
+				if (++bus_number != status_notifier_buses.size()) goto traverse_buses_label;
+				bus_number = 0;
+				invalidate_buses_label:
+				{
+					try
+					{
+						status_notifier_buses.at(bus_number++)->client->Category();
+					}
+					catch(...)
+					{
+						bus = status_notifier_buses.at(bus_number);
+						delete bus->client;
+						bus->connection.reset();
+						bus->icon.clear();
+						status_notifier_buses.erase(status_notifier_buses.begin() + bus_number);
+					}
+					if (bus_number != status_notifier_buses.size()) goto invalidate_buses_label;
+				}
+			}
+		}
 	}
 	//right
 	{
@@ -74,7 +187,7 @@ void draw(nkk_win* window, cairo_t* context)
 				sprintf(formatted, "[ %.2d:%.2d:%.2d ]", local_time->tm_hour, local_time->tm_min, local_time->tm_sec);
 				if (within_text_extents(context, formatted) == 1)
 				{
-					show_date = mouse_x = 1;
+					show_date = 1;
 					goto show_date_label;
 				}
 				draw_text(context, formatted, 2, cwbar_inactive);
@@ -84,7 +197,7 @@ void draw(nkk_win* window, cairo_t* context)
 				sprintf(formatted, "[ %.2d.%.2d.%.2d ]", local_time->tm_mday, 1 + local_time->tm_mon, 1900 + local_time->tm_year);
 				if (within_text_extents(context, formatted) == 1)
 				{
-					show_date = mouse_x = 0;
+					show_date = 0;
 					goto show_date_label;
 				}
 				draw_text(context, formatted, 2, cwbar_active);
@@ -111,111 +224,16 @@ void* draw_routine(void* window)
 	}
 	return nullptr;
 }
-class StatusNotifierItem_client : public sdbus::ProxyInterfaces<org::kde::StatusNotifierItem_proxy>
-{
-public:
-	StatusNotifierItem_client(sdbus::IConnection& connection, sdbus::ServiceName service, sdbus::ObjectPath path) : ProxyInterfaces(connection, service, path)
-	{
-		registerProxy();
-	}
-	void onNewTitle()
-	{
-		printf("client_item:on_new_title\n");
-	}
-	void onNewIcon()
-	{
-		printf("client_item:on_new_icon\n");
-	}
-	void onNewAttentionIcon()
-	{
-		printf("client_item:on_new_attention_icon\n");
-	}
-	void onNewOverlayIcon()
-	{
-		printf("client_item:on_new_overlay_icon\n");
-	}
-	void onNewToolTip()
-	{
-		printf("client_item:on_new_tooltip\n");
-	}
-	void onNewStatus(const std::string& status)
-	{
-		printf("client_item:on_new_status %s\n", status.c_str());
-	}
-};
-void* item_routine(void* service)
-{
-	std::unique_ptr<sdbus::IConnection> connection = sdbus::createSessionBusConnection();
-	StatusNotifierItem_client client(*connection, sdbus::ServiceName((char*)service), sdbus::ObjectPath("/StatusNotifierItem"));
-	client.Activate(0, 0); //note: debug
-	//td: resize & write bitmap
-	printf("(%s) icon_size: %d, %d, icon_bytes: %d\n",
-			client.Title().c_str(),
-			std::get<0>(client.IconPixmap().at(0)), std::get<1>(client.IconPixmap().at(0)),
-			std::get<2>(client.IconPixmap().at(0)).size());
-	process_event_label:
-	{
-		try
-		{
-			client.Category();
-			connection->enterEventLoopAsync();
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-			goto process_event_label;
-		}
-		catch(...)
-		{
-			//td: delete entry
-		}
-	}
-	return nullptr;
-}
-class StatusNotifierWatcher_server : public sdbus::AdaptorInterfaces<org::kde::StatusNotifierWatcher_adaptor>
-{
-public:
-	StatusNotifierWatcher_server(sdbus::IConnection& connection, sdbus::ObjectPath path) : AdaptorInterfaces(connection, path)
-	{
-		registerAdaptor();
-	}
-	void RegisterStatusNotifierItem(const std::string& service)
-	{
-		printf("server:register_item %s\n", service.c_str());
-		pthread_t thread;
-		pthread_create(&thread, nullptr, item_routine, (void*)service.c_str());
-		pthread_detach(thread);
-	}
-	void RegisterStatusNotifierHost(const std::string& service){}
-	int32_t ProtocolVersion()
-	{
-		return 0;
-	}
-	std::vector<std::string> RegisteredStatusNotifierItems()
-	{
-		return {};
-	}
-	bool IsStatusNotifierHostRegistered()
-	{
-		return 1;
-	}
-};
 int32_t main()
 {
-	//systray
-	{
-		std::unique_ptr<sdbus::IConnection> connection = sdbus::createBusConnection(sdbus::ServiceName("org.kde.StatusNotifierWatcher"));
-		StatusNotifierWatcher_server server(*connection, sdbus::ObjectPath("/StatusNotifierWatcher"));
-		connection->enterEventLoop(); //td: asynchronous. move to draw routine
-	}
-	//bar
-	{
-		nkk_layer_config layer = { NkkLayerBelow, (uint32_t)cwbar_width, (uint32_t)cwbar_height, NkkLayerAnchorTop | NkkLayerAnchorLeft | NkkLayerAnchorRight, (int32_t)cwbar_height };
-		nkk_display* display = nkk_display_open(nullptr, nullptr);
-		nkk_win* window = nkk_layer_window_create(display, &layer);
-		nkk_window_on_draw(window, draw);
-		nkk_window_on_mousedown(window, mouse_down);
-		pthread_t thread;
-		pthread_create(&thread, nullptr, draw_routine, window);
-		pthread_detach(thread);
-		nkk_display_main_loop(display);
-		nkk_display_close(display);
-	}
+	nkk_layer_config layer = { NkkLayerBelow, (uint32_t)cwbar_width, (uint32_t)cwbar_height, NkkLayerAnchorTop | NkkLayerAnchorLeft | NkkLayerAnchorRight, (int32_t)cwbar_height };
+	nkk_display* display = nkk_display_open(nullptr, nullptr);
+	nkk_win* window = nkk_layer_window_create(display, &layer);
+	nkk_window_on_draw(window, draw);
+	nkk_window_on_mousedown(window, mouse_down);
+	pthread_t thread;
+	pthread_create(&thread, nullptr, draw_routine, window);
+	pthread_detach(thread);
+	nkk_display_main_loop(display);
+	nkk_display_close(display);
 }
