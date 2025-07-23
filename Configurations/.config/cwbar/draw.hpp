@@ -1,5 +1,16 @@
 #include <pango/pangocairo.h>
-//td: implement `draw_bitmap`
+void draw_bitmap(cairo_t* context, int32_t x, uint8_t* bitmap, int32_t width, int32_t height)
+{
+	cairo_surface_t* surface = cairo_get_group_target(context);
+	uint8_t* data = cairo_image_surface_get_data(surface) + (uintptr_t)cwbar_width * 4 * (uintptr_t)((cwbar_height - 1.) / 2. - height / 2);
+	int32_t y = 0;
+	traverse_bitmap_label:
+	{
+		memcpy(&data[x * 4], bitmap + y * width, width * 4);
+		data += (uintptr_t)cwbar_width * 4;
+		if (++y != height) goto traverse_bitmap_label;
+	}
+}
 int8_t within_box(double start_x, double end_x)
 {
 	int8_t result = mouse_x >= start_x && mouse_x <= end_x;

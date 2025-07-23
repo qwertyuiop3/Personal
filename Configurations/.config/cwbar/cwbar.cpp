@@ -26,10 +26,18 @@ struct status_notifier_bus
 {
 	std::unique_ptr<sdbus::IConnection> connection;
 	struct StatusNotifierItem_client* client;
-	std::vector<uint8_t> icon;
+	int32_t width;
+	int32_t height;
+	std::vector<uint8_t> icon; //td: fix format
 };
 std::vector<status_notifier_bus*> status_notifier_buses;
 //td: implement `resize_icon`
+void resize_icon(status_notifier_bus* bus)
+{
+	bus->width = 16;
+	bus->height = 16;
+	bus->icon.resize(bus->width * bus->height * 4);
+}
 struct StatusNotifierItem_client : sdbus::ProxyInterfaces<org::kde::StatusNotifierItem_proxy>
 {
 	StatusNotifierItem_client(sdbus::IConnection& connection, sdbus::ServiceName service, sdbus::ObjectPath path) : ProxyInterfaces(connection, service, path)
@@ -40,8 +48,11 @@ struct StatusNotifierItem_client : sdbus::ProxyInterfaces<org::kde::StatusNotifi
 	void onNewIcon()
 	{
 		status_notifier_bus* bus = *std::find_if(status_notifier_buses.begin(), status_notifier_buses.end(), [&](status_notifier_bus* entry){return entry->client == this;});
+		bus->width = std::get<0>(IconPixmap().at(0));
+		bus->height = std::get<1>(IconPixmap().at(0));
 		bus->icon.resize(std::get<2>(IconPixmap().at(0)).size());
 		memcpy(bus->icon.data(), std::get<2>(IconPixmap().at(0)).data(), bus->icon.size());
+		resize_icon(bus);
 	}
 	void onNewAttentionIcon(){}
 	void onNewOverlayIcon(){}
@@ -59,8 +70,11 @@ struct StatusNotifierWatcher_server : sdbus::AdaptorInterfaces<org::kde::StatusN
 		status_notifier_bus* bus = new status_notifier_bus;
 		bus->connection = sdbus::createSessionBusConnection();
 		bus->client = new StatusNotifierItem_client(*bus->connection, sdbus::ServiceName(service.c_str()), sdbus::ObjectPath("/StatusNotifierItem"));
+		bus->width = std::get<0>(bus->client->IconPixmap().at(0));
+		bus->height = std::get<1>(bus->client->IconPixmap().at(0));
 		bus->icon.resize(std::get<2>(bus->client->IconPixmap().at(0)).size());
 		memcpy(bus->icon.data(), std::get<2>(bus->client->IconPixmap().at(0)).data(), bus->icon.size());
+		resize_icon(bus);
 		status_notifier_buses.push_back(bus);
 	}
 	void RegisterStatusNotifierHost(const std::string& service){}
@@ -131,7 +145,6 @@ void draw(nkk_win* window, cairo_t* context)
 			{
 				status_notifier_bus* bus = status_notifier_buses.at(bus_number);
 				process_events(bus->connection.get());
-				//td: draw bitmap
 				double icon_x_left = cwbar_center - 8;
 				if (status_notifier_buses.size() != 1)
 				{
@@ -139,6 +152,7 @@ void draw(nkk_win* window, cairo_t* context)
 					else icon_x_left += 13 * (status_notifier_buses.size() - bus_number);
 				}
 				double icon_x_right = icon_x_left + 16;
+				draw_bitmap(context, icon_x_left, bus->icon.data(), bus->width, bus->height);
 				draw_underline(context, icon_x_left, icon_x_right, cwbar_active);
 				if (mouse_x != 0)
 				{
@@ -158,7 +172,7 @@ void draw(nkk_win* window, cairo_t* context)
 					}
 					catch(...)
 					{
-						bus = status_notifier_buses.at(bus_number);
+						bus = status_notifier_buses.at(--bus_number);
 						delete bus->client;
 						bus->connection.reset();
 						bus->icon.clear();
