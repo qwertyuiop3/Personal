@@ -1,10 +1,15 @@
 #include <bits/stdc++.h>
 #include <wayland-client-protocol.h>
 #include <sdbus-c++/sdbus-c++.h>
+#define MAGICKCORE_QUANTUM_DEPTH 8
+#define MAGICKCORE_HDRI_ENABLE 0
+#include <Magick++.h> 
 double mouse_x;
 constexpr double cwbar_width = 1920;
 constexpr double cwbar_center = cwbar_width / 2.;
 constexpr double cwbar_height = 33;
+constexpr int32_t cwbar_icon_size = 16;
+constexpr double cwbar_icon_size_half = cwbar_icon_size / 2.;
 int8_t show_date;
 int8_t should_redraw;
 #include "StatusNotifierItem_proxy.hpp"
@@ -18,7 +23,6 @@ char* shell_output(char* command)
 	size_t length;
 	FILE* file = popen(command, "r");
 	getline(&line, &length, file);
-	line[strlen(line) - 1] = 0;
 	pclose(file);
 	return line;
 }
@@ -28,15 +32,24 @@ struct status_notifier_bus
 	struct StatusNotifierItem_client* client;
 	int32_t width;
 	int32_t height;
-	std::vector<uint8_t> icon; //td: fix format
+	std::vector<uint8_t> icon;
 };
 std::vector<status_notifier_bus*> status_notifier_buses;
-//td: implement `resize_icon`
 void resize_icon(status_notifier_bus* bus)
 {
-	bus->width = 16;
-	bus->height = 16;
-	bus->icon.resize(bus->width * bus->height * 4);
+	uintptr_t icon_offset = 0;
+	traverse_icon_label:
+	{
+		*(uint32_t*)(bus->icon.data() + icon_offset) = __builtin_bswap32(*(uint32_t*)(bus->icon.data() + icon_offset));
+		icon_offset += 4;
+		if (icon_offset != bus->width * bus->height * 4) goto traverse_icon_label;
+	}
+	Magick::Blob blob(bus->icon.data(), bus->icon.size());
+	Magick::Image image(blob, Magick::Geometry(bus->width, bus->height), MAGICKCORE_QUANTUM_DEPTH, "BGRA");
+	image.scale(Magick::Geometry(cwbar_icon_size, cwbar_icon_size));
+	image.write(&blob);
+	bus->icon.resize(blob.length());
+	memcpy(bus->icon.data(), blob.data(), bus->icon.size());
 }
 struct StatusNotifierItem_client : sdbus::ProxyInterfaces<org::kde::StatusNotifierItem_proxy>
 {
@@ -136,7 +149,7 @@ void draw(nkk_win* window, cairo_t* context)
 		process_events(connection.get());
 		if (status_notifier_buses.size() == 0)
 		{
-			draw_underline(context, cwbar_center - 8, cwbar_center + 8, cwbar_inactive);
+			draw_underline(context, cwbar_inactive, cwbar_center - cwbar_icon_size_half, cwbar_center + cwbar_icon_size_half);
 		}
 		else
 		{
@@ -145,15 +158,16 @@ void draw(nkk_win* window, cairo_t* context)
 			{
 				status_notifier_bus* bus = status_notifier_buses.at(bus_number);
 				process_events(bus->connection.get());
-				double icon_x_left = cwbar_center - 8;
+				double icon_x_left = cwbar_center - cwbar_icon_size_half;
+				constexpr double icon_spacing = cwbar_icon_size_half + 10 / 2.;
 				if (status_notifier_buses.size() != 1)
 				{
-					if (bus_number % 2 == 0) icon_x_left -= 13 * (status_notifier_buses.size() - bus_number - 1);
-					else icon_x_left += 13 * (status_notifier_buses.size() - bus_number);
+					if (bus_number % 2 == 0) icon_x_left -= icon_spacing * (status_notifier_buses.size() - bus_number - 1);
+					else icon_x_left += icon_spacing * (status_notifier_buses.size() - bus_number);
 				}
-				double icon_x_right = icon_x_left + 16;
-				draw_bitmap(context, icon_x_left, bus->icon.data(), bus->width, bus->height);
-				draw_underline(context, icon_x_left, icon_x_right, cwbar_active);
+				double icon_x_right = icon_x_left + cwbar_icon_size;
+				draw_bitmap(context, icon_x_left, bus->icon.data());
+				draw_underline(context, cwbar_active, icon_x_left, icon_x_right);
 				if (mouse_x != 0)
 				{
 					try
@@ -187,6 +201,7 @@ void draw(nkk_win* window, cairo_t* context)
 	{
 		char* capital = shell_output("cat /sys/class/leds/input*::capslock/brightness");
 		char* language = shell_output("echo $(hyprctl devices | grep -o Russian)");
+		*strchr(language, '\n') = '\0';
 		sprintf(formatted, "[ %s ]", language[0] == 0 ? "English" : language);
 		if (capital[0] == '0') draw_text(context, formatted, 1, cwbar_inactive);
 		else draw_text(context, formatted, 1, cwbar_active);

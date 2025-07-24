@@ -1,14 +1,25 @@
 #include <pango/pangocairo.h>
-void draw_bitmap(cairo_t* context, int32_t x, uint8_t* bitmap, int32_t width, int32_t height)
+void draw_bitmap(cairo_t* context, int32_t x, uint8_t* bitmap)
 {
 	cairo_surface_t* surface = cairo_get_group_target(context);
-	uint8_t* data = cairo_image_surface_get_data(surface) + (uintptr_t)cwbar_width * 4 * (uintptr_t)((cwbar_height - 1.) / 2. - height / 2);
-	int32_t y = 0;
-	traverse_bitmap_label:
+	uint8_t* data = cairo_image_surface_get_data(surface) + (uintptr_t)cwbar_width * 4 * (uintptr_t)((cwbar_height - 1.) / 2. - cwbar_icon_size / 2);
+	int32_t vertical = 0;
+	traverse_vertical_label:
 	{
-		memcpy(&data[x * 4], bitmap + y * width, width * 4);
+		int32_t horizontal = 0;
+		traverse_horizontal_label:
+		{
+			uint8_t* destination = &data[(x + horizontal) * 4];
+			uint8_t* source = &bitmap[(vertical * cwbar_icon_size + horizontal) * 4];
+			uint8_t blend = 255 - source[3];
+			destination[0] = (destination[0] * blend + source[0] * source[3]) / 255;
+			destination[1] = (destination[1] * blend + source[1] * source[3]) / 255;
+			destination[2] = (destination[2] * blend + source[2] * source[3]) / 255;
+			destination[3] = 255;
+			if (++horizontal != cwbar_icon_size) goto traverse_horizontal_label;
+		}
 		data += (uintptr_t)cwbar_width * 4;
-		if (++y != height) goto traverse_bitmap_label;
+		if (++vertical != cwbar_icon_size) goto traverse_vertical_label;
 	}
 }
 int8_t within_box(double start_x, double end_x)
@@ -17,7 +28,7 @@ int8_t within_box(double start_x, double end_x)
 	mouse_x *= result ^ 1;
 	return result;
 }
-void draw_underline(cairo_t* context, double start_x, double end_x, uint32_t color)
+void draw_underline(cairo_t* context, uint32_t color, double start_x, double end_x)
 {
 	cairo_set_source_rgb(context, cwbar_red(color) / 255., cwbar_green(color) / 255., cwbar_blue(color) / 255.);
 	cairo_set_line_width(context, 1);
@@ -63,7 +74,7 @@ void draw_text(cairo_t* context, char* text, int8_t right, uint32_t color)
 	cairo_save(context);
 	pango_cairo_show_layout(context, layout);
 	cairo_restore(context);
-	if (right == 0) draw_underline(context, x + extents.width - 3, x + 3, color);
-	else draw_underline(context, x - extents.width + 3, x - 3, color);
+	if (right == 0) draw_underline(context, color, x + extents.width - 3, x + 3);
+	else draw_underline(context, color, x - extents.width + 3, x - 3);
 	cairo_move_to(context, right == 0 ? x + extents.width - 3 : x - extents.width + 3, y);
 }
