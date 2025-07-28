@@ -61,11 +61,15 @@ struct StatusNotifierItem_client : sdbus::ProxyInterfaces<org::kde::StatusNotifi
 	void onNewIcon()
 	{
 		status_notifier_bus* bus = *std::find_if(status_notifier_buses.begin(), status_notifier_buses.end(), [&](status_notifier_bus* entry){return entry->client == this;});
-		bus->width = std::get<0>(IconPixmap().at(0));
-		bus->height = std::get<1>(IconPixmap().at(0));
-		bus->icon.resize(std::get<2>(IconPixmap().at(0)).size());
-		memcpy(bus->icon.data(), std::get<2>(IconPixmap().at(0)).data(), bus->icon.size());
-		resize_icon(bus);
+		try
+		{
+			bus->width = std::get<0>(IconPixmap().at(0));
+			bus->height = std::get<1>(IconPixmap().at(0));
+			bus->icon.resize(std::get<2>(IconPixmap().at(0)).size());
+			memcpy(bus->icon.data(), std::get<2>(IconPixmap().at(0)).data(), bus->icon.size());
+			resize_icon(bus);
+		}
+		catch(...){}
 	}
 	void onNewAttentionIcon(){}
 	void onNewOverlayIcon(){}
@@ -83,12 +87,16 @@ struct StatusNotifierWatcher_server : sdbus::AdaptorInterfaces<org::kde::StatusN
 		status_notifier_bus* bus = new status_notifier_bus;
 		bus->connection = sdbus::createSessionBusConnection();
 		bus->client = new StatusNotifierItem_client(*bus->connection, sdbus::ServiceName(service.c_str()), sdbus::ObjectPath("/StatusNotifierItem"));
-		bus->width = std::get<0>(bus->client->IconPixmap().at(0));
-		bus->height = std::get<1>(bus->client->IconPixmap().at(0));
-		bus->icon.resize(std::get<2>(bus->client->IconPixmap().at(0)).size());
-		memcpy(bus->icon.data(), std::get<2>(bus->client->IconPixmap().at(0)).data(), bus->icon.size());
-		resize_icon(bus);
-		status_notifier_buses.push_back(bus);
+		try
+		{
+			bus->width = std::get<0>(bus->client->IconPixmap().at(0));
+			bus->height = std::get<1>(bus->client->IconPixmap().at(0));
+			bus->icon.resize(std::get<2>(bus->client->IconPixmap().at(0)).size());
+			memcpy(bus->icon.data(), std::get<2>(bus->client->IconPixmap().at(0)).data(), bus->icon.size());
+			resize_icon(bus);
+			status_notifier_buses.push_back(bus);
+		}
+		catch(...){}
 	}
 	void RegisterStatusNotifierHost(const std::string& service){}
 	int32_t ProtocolVersion()

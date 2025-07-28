@@ -1,4 +1,10 @@
 #!/usr/bin/env zsh
 . /etc/X11/xinit/xinitrc.d/50-systemd-user.sh
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+gsettings set org.gnome.desktop.interface gtk-theme FlatColor
+gsettings set org.gnome.desktop.interface icon-theme elementary-xfce-dark
+gsettings set org.gnome.desktop.interface font-name "Noto Sans Regular 10"
+gsettings set org.gnome.desktop.interface document-font-name "Noto Sans Regular 10"
+gsettings set org.gnome.desktop.interface monospace-font-name "Noto Sans Mono Regular 10"
+gsettings set org.gnome.desktop.interface color-scheme prefer-dark
 exec hyprland
