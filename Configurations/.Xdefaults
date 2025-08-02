@@ -5,10 +5,6 @@ URxvt.iso14755: 0
 URxvt.iso14755_52: 0
 URxvt.scrollBar: 0
 URxvt.perl-ext-common: default,vtwheel
-URxvt.tabbed.tabbar-bg: 0
-URxvt.tabbed.tabbar-fg: 1
-URxvt.tabbed.tab-bg: 0
-URxvt.tabbed.tab-fg: 7
 URxvt.keysym.C-M-c: builtin-string:
 URxvt.keysym.C-M-v: builtin-string:
 URxvt.keysym.S-C-C: eval:selection_to_clipboard
