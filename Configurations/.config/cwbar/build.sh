@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 clear
 sdbus-c++-xml2cpp org.kde.StatusNotifierWatcher.xml --adaptor=StatusNotifierWatcher_adaptor.hpp
 sdbus-c++-xml2cpp org.kde.StatusNotifierItem.xml --proxy=StatusNotifierItem_proxy.hpp
