@@ -9,7 +9,7 @@ if [ $UID -ne 0 ]; then
 	cat ~/.cache/wal/sequences
 	if [ $TERM == "rxvt-unicode-256color" ]; then
 		neofetch
-		alias mpv="mpv --audio-file-auto=all --sub-auto=all $@"
+		alias mpv="mpv --audio-file-auto=all --sub-auto=all --no-osd-bar $@"
 		alias mpvu="command mpv --profile=low-latency --untimed $@"
 		alias ncmpcpp="ncmpcpp;printf \"\e]20;;0x0+1920+1080\a\""
 		run()
