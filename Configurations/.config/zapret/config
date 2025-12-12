@@ -1,0 +1,1 @@
+NFQWS2_OPT="--filter-l7=http,tls --payload=tls_client_hello --blob=tls:@/home/explorer/.config/zapret/tls.bin --lua-desync=fake:blob=tls:badsum:tcp_seq=-10000"

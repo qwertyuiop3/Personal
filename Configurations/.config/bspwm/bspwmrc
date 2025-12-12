@@ -5,8 +5,6 @@ if ! pgrep picom > /dev/null; then
 	picom &
 	~/.config/C_Bar/C_Bar &
 	qbittorrent &
-	ciadpi -d 2 &
-	ciadpi -p 1081 -o 1 &
 	throne &
 	sxhkd &
 fi
