@@ -1,1 +1,1 @@
-NFQWS2_OPT="--filter-l7=http,tls --payload=tls_client_hello --blob=tls:@/home/explorer/.config/zapret/tls.bin --lua-desync=fake:blob=tls:badsum:tcp_seq=-10000"
+NFQWS2_OPT="--filter-l7=http,tls --hostlist=/opt/zapret2/hostlist --lua-desync=multisplit:pos=2:seqovl=1 --new --filter-l7=http,tls --payload=tls_client_hello --blob=tls:@/opt/zapret2/tls.bin --lua-desync=fake:blob=tls:badsum:tcp_seq=10 --new --filter-l7=quic --payload=quic_initial --blob=quic:@/opt/zapret2/quic.bin --lua-desync=fake:blob=quic:badsum:tcp_seq=10"
