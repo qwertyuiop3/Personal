@@ -8,7 +8,22 @@ if [ $UID -ne 0 ]; then
 	rm -rf ~/.local/share/ranger
 	cat ~/.cache/wal/sequences
 	if [ $TERM == "rxvt-unicode-256color" ]; then
-		neofetch
+		reboot()
+		{
+			pkill qbittorrent
+			while pgrep qbittorrent > /dev/null; do
+				sleep 1
+			done
+			command reboot
+		}
+		poweroff()
+		{
+			pkill qbittorrent
+			while pgrep qbittorrent > /dev/null; do
+				sleep 1
+			done
+			command poweroff
+		}
 		alias mpv="mpv --audio-file-auto=all --sub-auto=all --no-osd-bar $@"
 		alias mpvu="command mpv --profile=low-latency --untimed $@"
 		alias ncmpcpp="ncmpcpp;printf \"\e]20;;0x0+1920+1080\a\""
@@ -23,5 +38,6 @@ if [ $UID -ne 0 ]; then
 			command firejail --private=/Storage/Software/firejail $@
 		}
 		alias wine=""
+		neofetch
 	fi
 fi
