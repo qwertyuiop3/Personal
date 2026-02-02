@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 . "${HOME}/.cache/wal/colors.sh"
-if ! pgrep fastcompmgr > /dev/null; then
+if ! pgrep xcompmgr > /dev/null; then
 	feh --bg-fill $wallpaper
-	fastcompmgr &
+	xcompmgr &
 	~/.config/C_Bar/C_Bar &
 	qbittorrent &
 	throne &
