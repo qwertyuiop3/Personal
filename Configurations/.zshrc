@@ -5,6 +5,7 @@ SAVEHIST=1024
 unsetopt autocd beep extendedglob nomatch notify
 if [ $UID -ne 0 ]; then
 	rm -rf ~/.cache/ranger
+	rm -rf ~/.cache/ueberzugpp
 	rm -rf ~/.local/share/ranger
 	cat ~/.cache/wal/sequences
 	if [ $TERM == "rxvt-unicode-256color" ]; then
