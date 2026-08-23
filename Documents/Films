@@ -15,12 +15,36 @@
 	[2026]:
 		[Прима]: относительно мифологического восприятия (искусственное, моментарное, иррациональное, ...).
 			- Напоминание: (почистить, стабилизировать идиолект), когда N-ая фиксация будет завершена.
+				[prime]: short(scope), short(summary) - redundant
 				[double]: short(state)
 					- reference, formula(super[eye->lookat(self)], pseudo[eye->lookat(mirror)*inv_approx])
-					- imperceptible quantum super, forced pseudo
+					- long(state) - exclusive quantum super, forced pseudo
 					- long(state) - redundant
 					- example: common+{pseudo, cross(pseudo)}
-			- ...
+				[rating]: short(goal). short(reason) - redundant
+					- false argument
+					- proof
+					- true argument
+					- proof
+					- conclusion. momentary
+				[eval]: short(subject)
+					- syllogism. inheritance
+					- conclusion. issue of inheritance (limited evaluation)
+					- assertion. closed system (requirement of superdeterminism)
+					- assertion. mimicking' consciousness (physical shapening. limited evaluation)
+					- conclusion. superdeterminism
+					- definition. physical antinomy - redundant
+					- definition. edge case (of ^) - redundant
+					- assertion. inevitable system closure (edge case) - redundant
+					- conclusion. chaotic principle, (redundant) the resisting present
+					- conclusion. mechanism of shapening - redundant
+					- conclusion. affirmation of superdeterminism - redundant
+				[herm]: short(goal). redundant
+					- state(long)
+					- state(long)
+					- proposition
+			- Напоминание: (отбросить погодичный принцип;
+				возможно, вынести отдельным файлом)
 			[Двойственность]: признание искусственной доминанты восприятия.
 				- Подкрепляясь прошлогодним рассуждением, истинную двойственность отличает взаимоисключаемость: признак себя в сознании.
 				- Следовательно, неизбежная общность связующих элементов - форматив ложной двойственности.
@@ -191,7 +215,7 @@
 			Вонг Кар-Вай)
 
 [Фильмы]: коллекция просмотренных.
-	[2026]: 251 вхождений.
+	[2026]: 254 вхождений.
 		Антракт (1924)
 		$ Люди в воскресенье (1930)
 		Этой ночи жена (1930)
@@ -424,12 +448,14 @@
 		$ Божественная любовь (2019)
 		Люди в воскресенье (2020)
 		Дни (2020)
+		2551.01: Малыш (2021)
 		$= 49/232 (2021)
 		Хлюп! (2021)
 		$ Анатомия времени (2021)
 		Голем (2021)
 		= Сумасшедший принцип. Трактористы два. Нонсенсорики (2022)
 		* Короткая история (2022)
+		2551.02: Оргия проклятых (2023)
 		Ускользнувший сон (2023)
 		= Мангустин (2023)
 		Красный чемодан (2023)
@@ -439,6 +465,7 @@
 		= Вакамуся (2024)
 		$= Парк (2024. "So Yo-hen")
 		$ Фантосмия (2024)
+		2551.03: Конец (2025)
 		Внутри каракурта (2025)
 		Магеллан (2025)
 		= Компотский дым (2025)
