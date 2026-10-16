@@ -2,10 +2,7 @@ Print
 	scrot - | feh -F - & scrot -s -l mode=edge,color=#c4c4c0 - | xclip -t image/png -selection c; kill $!
 
 super + f
-	bspc node -t floating
-
-super + l
-	scrot - | magick - -spread 0 /tmp/lock.png; i3lock -ui /tmp/lock.png
+	bspc node -t \~fullscreen
 
 super + m
 	bspc node -g marked; bspc node newest.marked.local -n newest.!automatic.local
@@ -20,7 +17,10 @@ super + F1
 	bspc config window_gap $(($(bspc config window_gap)^32)); bspc config border_width $(($(bspc config border_width)^1))
 
 super + shift + f
-	bspc node -t \~fullscreen
+	bspc node -t floating
+
+super + shift + l
+	scrot - | magick - -spread 0 /tmp/lock.png; i3lock -ui /tmp/lock.png
 
 super + shift + t
 	bspc node -t tiled

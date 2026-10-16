@@ -3,7 +3,7 @@
 if ! pgrep xcompmgr > /dev/null; then
 	feh --bg-fill $wallpaper
 	xcompmgr &
-	~/.config/C_Bar/C_Bar &
+	~/.config/cbar/cbar &
 	qbittorrent &
 	opensnitch-ui &
 	sxhkd &

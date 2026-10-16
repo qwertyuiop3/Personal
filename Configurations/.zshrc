@@ -25,7 +25,6 @@ if [ $UID -ne 0 ]; then
 			done
 			command poweroff
 		}
-		alias mpv="mpv --audio-file-auto=all --sub-auto=all --no-osd-bar $@"
 		alias mpvu="command mpv --profile=low-latency --untimed $@"
 		alias ncmpcpp="ncmpcpp;printf \"\e]20;;0x0+1920+1080\a\""
 		run()

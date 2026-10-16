@@ -1,2 +1,0 @@
-$active = rgb({foreground.strip})
-$inactive = rgb({color1.strip})
