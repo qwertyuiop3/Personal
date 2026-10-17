@@ -1,26 +1,25 @@
 #include <vector>
 #include <sys/socket.h>
+timeval bspwm_timeout;
 #include <sys/un.h>
 #include <unistd.h>
-#include <poll.h>
-#include "xcb/xcb.h"
+#include "xcb/xkb.h"
 #include "xcb/xcb_ewmh.h"
 #include "colors-cbar.hpp"
 #include "cairo/cairo-xcb.h"
+#include <poll.h>
 #include "X11/XKBlib.h"
-#include <thread>
+#include <cstdio>
 void bspc(char* command, size_t length, std::vector<char*>& output)
 {
 	int32_t bspwm_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+	setsockopt(bspwm_socket, SOL_SOCKET, SO_RCVTIMEO, &bspwm_timeout, sizeof(bspwm_timeout));
 	sockaddr_un bspwm_address = { AF_UNIX, "/tmp/bspwm_0_0-socket" };
 	connect(bspwm_socket, (sockaddr*)&bspwm_address, sizeof(sockaddr_un));
 	send(bspwm_socket, command, length, 0);
-	pollfd stream = { bspwm_socket, POLLIN };
-	while (poll(&stream, sizeof(stream) / sizeof(pollfd), -1) > 0)
 	{
 		char stack[BUFSIZ];
 		ssize_t size = recv(bspwm_socket, stack, sizeof(stack), 0);
-		if (size > 0)
 		{
 			char* field = stack;
 			do
@@ -30,13 +29,15 @@ void bspc(char* command, size_t length, std::vector<char*>& output)
 				output.push_back(strcpy((char*)malloc(strlen(field) + 1), field));
 				field = next_field + 1;
 			} while (field != stack + size);
-		} else break;
+		}
 	}
 	close(bspwm_socket);
 }
 int32_t main()
 {
 	xcb_connection_t* x_connection = xcb_connect(nullptr, nullptr);
+	xcb_xkb_use_extension(x_connection, XCB_XKB_MAJOR_VERSION, XCB_XKB_MINOR_VERSION);
+	xcb_xkb_select_events(x_connection, XCB_XKB_ID_USE_CORE_KBD, XCB_XKB_EVENT_TYPE_INDICATOR_STATE_NOTIFY, 0, XCB_XKB_EVENT_TYPE_INDICATOR_STATE_NOTIFY, 0, 0, nullptr);
 	xcb_screen_t* screen = xcb_setup_roots_iterator(xcb_get_setup(x_connection)).data;
 	xcb_window_t window = xcb_generate_id(x_connection);
 	uint16_t bar_width = screen->width_in_pixels;
@@ -50,6 +51,13 @@ int32_t main()
 	xcb_set_selection_owner(x_connection, window, atom_reply->atom, XCB_CURRENT_TIME);
 	free(atom_reply);
 	xcb_map_window(x_connection, window);
+	int32_t bspwm_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+	bspwm_timeout.tv_sec = 60;
+	setsockopt(bspwm_socket, SOL_SOCKET, SO_RCVTIMEO, &bspwm_timeout, sizeof(bspwm_timeout));
+	sockaddr_un bspwm_address = { AF_UNIX, "/tmp/bspwm_0_0-socket" };
+	connect(bspwm_socket, (sockaddr*)&bspwm_address, sizeof(sockaddr_un));
+	send(bspwm_socket, "subscribe\0report", sizeof("subscribe\0report"), 0);
+	pollfd stream[2] = { { xcb_get_file_descriptor(x_connection), POLLIN }, { bspwm_socket, POLLIN } };
 	cairo_surface_t* surface = cairo_xcb_surface_create(x_connection, window, xcb_depth_visuals_iterator(xcb_screen_allowed_depths_iterator(screen).data).data, bar_width, bar_height);
 	cairo_t* cairo = cairo_create(surface);
 	cairo_select_font_face(cairo, "notosansmono", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
@@ -58,8 +66,15 @@ int32_t main()
 	int8_t show_date = 0;
 	while (Display* display = XOpenDisplay(nullptr))
 	{
-		xcb_generic_event_t* event = xcb_poll_for_event(x_connection); //td: replace with wait_for, bspc subscribe, xkbevents
-		if (event != nullptr)
+		xcb_generic_event_t* event = nullptr;
+		if (poll(stream, sizeof(stream) / sizeof(pollfd), 1000) > 0)
+		{
+			if (stream[0].revents == POLLIN) event = xcb_poll_for_event(x_connection);
+			char stack[BUFSIZ];
+			if (stream[1].revents == POLLIN) recv(bspwm_socket, stack, sizeof(stack), 0);
+		}
+		if (event == nullptr) event = (xcb_generic_event_t*)calloc(1, sizeof(xcb_generic_event_t));
+		while (event != nullptr)
 		{
 			cairo_set_source_rgb(cairo, cbar_color(cbar_background));
 			cairo_paint(cairo);
@@ -93,8 +108,8 @@ int32_t main()
 							cairo_set_source_rgb(cairo, cbar_color(cbar_active));
 						else
 							cairo_set_source_rgb(cairo, cbar_color(cbar_inactive));
-						sprintf(formatted, "[ %d ]", workspace_number);
 						cairo_move_to(cairo, text_x - text_bearing[0], text_y);
+						sprintf(formatted, "[ %d ]", workspace_number);
 						cairo_show_text(cairo, formatted);
 						cairo_move_to(cairo, text_x, bar_height);
 						cairo_text_extents(cairo, formatted, &text_extents);
@@ -152,7 +167,6 @@ int32_t main()
 					cairo_stroke(cairo);
 				} while (++icon_number < icons.size());
 			}
-			time_t seconds = time(&seconds);
 			//right
 			{
 				uint32_t indicator_state;
@@ -169,6 +183,7 @@ int32_t main()
 				cairo_move_to(cairo, text_x, bar_height);
 				cairo_line_to(cairo, text_x + text_extents.width, bar_height);
 				cairo_stroke(cairo);
+				time_t seconds = time(nullptr);
 				tm* local_time = localtime(&seconds);
 				if (event_identifier == XCB_BUTTON_PRESS)
 				{
@@ -198,13 +213,7 @@ int32_t main()
 			cairo_surface_flush(surface);
 			xcb_flush(x_connection);
 			free(event);
-		}
-		else
-		{
-			xcb_expose_event_t event = { XCB_EXPOSE };
-			xcb_send_event(x_connection, 0, window, XCB_EVENT_MASK_EXPOSURE, (char*)&event);
-			xcb_flush(x_connection);
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			event = xcb_poll_for_event(x_connection);
 		}
 		XCloseDisplay(display);
 	}
