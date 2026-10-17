@@ -1,36 +1,38 @@
 #include <vector>
-#include <cstring>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <poll.h>
 #include "xcb/xcb.h"
 #include "xcb/xcb_ewmh.h"
 #include "colors-cbar.hpp"
 #include "cairo/cairo-xcb.h"
 #include "X11/XKBlib.h"
-#include <algorithm>
 #include <thread>
-//td: replace with https://github.com/baskerville/bspwm/blob/master/src/bspc.c
-char* shell_output(char* command)
+void bspc(char* command, size_t length, std::vector<char*>& output)
 {
-	char* line = nullptr;
-	size_t length;
-	FILE* file = popen(command, "r");
-	getline(&line, &length, file);
-	pclose(file);
-	return line;
-}
-void shell_output_multiple(char* command, std::vector<char*>& output)
-{
-	char* line = nullptr;
-	size_t length;
-	FILE* file = popen(command, "r");
-	while (getline(&line, &length, file) != -1)
+	int32_t bspwm_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+	sockaddr_un bspwm_address = { AF_UNIX, "/tmp/bspwm_0_0-socket" };
+	connect(bspwm_socket, (sockaddr*)&bspwm_address, sizeof(sockaddr_un));
+	send(bspwm_socket, command, length, 0);
+	pollfd stream = { bspwm_socket, POLLIN };
+	while (poll(&stream, sizeof(stream) / sizeof(pollfd), -1) > 0)
 	{
-		length = strlen(line);
-		char* allocated_line = (char*)malloc(length);
-		memcpy(allocated_line, line, length);
-		output.push_back(allocated_line);
+		char stack[BUFSIZ];
+		ssize_t size = recv(bspwm_socket, stack, sizeof(stack), 0);
+		if (size > 0)
+		{
+			char* field = stack;
+			do
+			{
+				char* next_field = strchr(field, '\n');
+				*next_field = '\0';
+				output.push_back(strcpy((char*)malloc(strlen(field) + 1), field));
+				field = next_field + 1;
+			} while (field != stack + size);
+		} else break;
 	}
-	free(line);
-	pclose(file);
+	close(bspwm_socket);
 }
 int32_t main()
 {
@@ -70,40 +72,44 @@ int32_t main()
 			//left
 			{
 				std::vector<char*> workspaces;
-				char* focused_workspace_string = shell_output("bspc query -D -d --names");
-				int32_t focused_workspace_number = atoi(focused_workspace_string);
-				workspaces.push_back(focused_workspace_string);
-				shell_output_multiple("bspc query -D -d .occupied.!focused --names", workspaces);
-				std::sort(workspaces.begin(), workspaces.end(), [](char* x, char* y) -> int8_t { return atoi(x) < atoi(y); });
-				size_t entry_number = 0;
+				bspc("query\0-D\0-d\0.!focused.!occupied\0--names", sizeof("query\0-D\0-d\0.!focused.!occupied\0--names"), workspaces);
+				int8_t workspace_flag[11] = { };
+				for (char* workspace : workspaces)
+				{
+					workspace_flag[atoi(workspace)] = 1;
+					free(workspace);
+				}
+				std::vector<char*> focused_workspace;
+				bspc("query\0-D\0-d\0--names", sizeof("query\0-D\0-d\0--names"), focused_workspace);
+				int32_t focused_workspace_number = atoi(focused_workspace.back());
+				free(focused_workspace.back());
+				int32_t workspace_number = 1;
+				double text_x = item_spacing;
 				do
 				{
-					char* workspace_string = workspaces.at(entry_number);
-					int32_t workspace_number = atoi(workspace_string);
-					if (workspace_number == focused_workspace_number)
-						cairo_set_source_rgb(cairo, cbar_color(cbar_active));
-					else
-						cairo_set_source_rgb(cairo, cbar_color(cbar_inactive));
-					free(workspace_string);
-					cairo_text_extents(cairo, "[ 0 ]", &text_extents);
-					double workspace_spacing = entry_number * (text_extents.width + item_spacing);
-					cairo_move_to(cairo, item_spacing - text_bearing[0] + workspace_spacing, text_y);
-					sprintf(formatted, "[ %i ]", workspace_number);
-					cairo_show_text(cairo, formatted);
-					cairo_move_to(cairo, item_spacing + workspace_spacing, bar_height);
-					cairo_line_to(cairo, item_spacing + workspace_spacing + text_extents.width, bar_height);
-					cairo_stroke(cairo);
-				} while (++entry_number != workspaces.size());
+					if (workspace_flag[workspace_number] == 0)
+					{
+						if (workspace_number == focused_workspace_number)
+							cairo_set_source_rgb(cairo, cbar_color(cbar_active));
+						else
+							cairo_set_source_rgb(cairo, cbar_color(cbar_inactive));
+						sprintf(formatted, "[ %d ]", workspace_number);
+						cairo_move_to(cairo, text_x - text_bearing[0], text_y);
+						cairo_show_text(cairo, formatted);
+						cairo_move_to(cairo, text_x, bar_height);
+						cairo_text_extents(cairo, formatted, &text_extents);
+						cairo_line_to(cairo, text_x + text_extents.width, bar_height);
+						cairo_stroke(cairo);
+						text_x += text_extents.width + item_spacing;
+					}
+				} while (++workspace_number != 11);
 			}
 			uint8_t event_identifier = event->response_type & ~128;
 			//center
 			{
-				constexpr uint16_t icon_size = 16;
-				double icon_center_x = bar_width / 2 - icon_size / 2;
-				constexpr uint16_t icon_spacing = icon_size / 2 + item_spacing / 2;
-				double icon_center_y = bar_height / 2 - icon_size / 2;
 				if (event_identifier == XCB_DESTROY_NOTIFY)
 					std::erase(icons, ((xcb_unmap_notify_event_t*)event)->window);
+				constexpr uint16_t icon_size = 16;
 				if (event_identifier == XCB_CLIENT_MESSAGE)
 				{
 					xcb_query_tree_reply_t* tree_reply = xcb_query_tree_reply(x_connection, xcb_query_tree(x_connection, ((xcb_client_message_event_t*)event)->data.data32[2]), nullptr);
@@ -113,23 +119,26 @@ int32_t main()
 						xcb_configure_window(x_connection, icons.back(), XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[2]){ icon_size, icon_size });
 					}
 				}
+				double icon_center_x = bar_width / 2 - icon_size / 2;
+				constexpr uint16_t icon_spacing = icon_size / 2 + item_spacing / 2;
+				size_t icon_number = 0;
+				double icon_center_y = bar_height / 2 - icon_size / 2;
 				if (icons.size() == 0)
 					cairo_set_source_rgb(cairo, cbar_color(cbar_inactive));
 				else
 					cairo_set_source_rgb(cairo, cbar_color(cbar_active));
-				size_t icon_number = 0;
 				do
 				{
 					double icon_x = icon_center_x;
-					if (icons.size() > 1)
+					if (icons.size() != 0)
 					{
-						if (icon_number % 2 == 0)
-							icon_x -= icon_spacing * (icons.size() - icon_number - 1);
-						else
-							icon_x += icon_spacing * (icons.size() - icon_number);
-					}
-					if (icons.size() > 0)
-					{
+						if (icons.size() > 1)
+						{
+							if (icon_number % 2 == 0)
+								icon_x -= icon_spacing * (icons.size() - icon_number - 1);
+							else
+								icon_x += icon_spacing * (icons.size() - icon_number);
+						}
 						if (event_identifier == XCB_DESTROY_NOTIFY)
 							xcb_reparent_window(x_connection, icons.at(icon_number), window, icon_x, icon_center_y);
 						if (event_identifier == XCB_CLIENT_MESSAGE)
