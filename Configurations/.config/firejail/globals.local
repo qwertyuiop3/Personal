@@ -4,3 +4,4 @@ blacklist /Storage/*
 blacklist /Storage/Software/*
 blacklist /Portable_Storage
 blacklist /Windows
+net none
