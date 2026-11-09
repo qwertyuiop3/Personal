@@ -38,6 +38,6 @@ if [ $UID -ne 0 ]; then
 			command firejail --private=/Storage/Software/firejail $@
 		}
 		alias wine=""
-		neofetch
+		task ls
 	fi
 fi
